@@ -21,13 +21,6 @@ class Prestamo(metaclass=ValidarMayuscula):
 
     Composición: Biblioteca crea y destruye estos objetos.
     Un Prestamo no tiene sentido fuera de la Biblioteca.
-
-    Atributos:
-        ejemplar       : EjemplarPrestable físico prestado.
-        usuario        : Usuario que lleva el ejemplar.
-        fecha_inicio   : date de cuando se registró el préstamo.
-        fecha_limite   : date hasta la que debe devolverse.
-        fecha_devol    : date real de devolución (None si sigue activo).
     """
 
     def __init__(self, ejemplar: EjemplarPrestable, usuario: Usuario):
@@ -53,14 +46,14 @@ class Prestamo(metaclass=ValidarMayuscula):
         vencido = " ⚠ VENCIDO" if self.vencido else ""
         return (
             f"Préstamo [{self.ejemplar.id_ejemplar}] "
-            f"'{self.ejemplar.titulo}' → {self.usuario.nombre} | "
+            f"'{self.ejemplar.titulo}' → {self.usuario.nombre_completo} | "
             f"Límite: {self.fecha_limite} | {estado}{vencido}"
         )
 
     def __repr__(self):
         return (
             f"Prestamo(id={self.ejemplar.id_ejemplar!r}, "
-            f"usuario={self.usuario.legajo!r}, activo={self.activo})"
+            f"usuario={self.usuario.dni!r}, activo={self.activo})"
         )
 
 
@@ -72,30 +65,22 @@ class Biblioteca(metaclass=ValidarMayuscula):
     """
     Sistema central de la biblioteca física. Patrón Singleton.
 
-    Una sola instancia garantiza que el catálogo de ejemplares,
-    los usuarios registrados y los préstamos sean siempre consistentes,
-    sin importar desde qué parte del código se acceda.
+    Una sola instancia garantiza consistencia total del sistema.
 
     Relaciones:
         Agregación  → listas de Ejemplar y Usuario
-                      (existen independientemente de la Biblioteca).
         Composición → lista de Prestamo
-                      (los préstamos son creados y destruidos por Biblioteca).
     """
 
-    _instancia = None   # única instancia compartida por todo el sistema
+    _instancia = None
 
-    # ── Singleton ──────────────────────────────
     def __new__(cls, nombre: str = "Biblioteca Central"):
         if cls._instancia is None:
             cls._instancia = super().__new__(cls)
-            # Inicializar atributos solo la primera vez
             cls._instancia._inicializada = False
         return cls._instancia
 
     def __init__(self, nombre: str = "Biblioteca Central"):
-        # __init__ se ejecuta cada vez que se llama a Biblioteca(),
-        # pero los datos solo se cargan la primera vez.
         if self._inicializada:
             return
         self.nombre = nombre
@@ -104,7 +89,6 @@ class Biblioteca(metaclass=ValidarMayuscula):
         self._prestamos: list[Prestamo] = []      # composición
         self._inicializada = True
 
-    # ── Representación ─────────────────────────
     def __str__(self):
         return (
             f"=== {self.nombre} ===\n"
@@ -129,6 +113,33 @@ class Biblioteca(metaclass=ValidarMayuscula):
         return f"Ejemplar '{ejemplar.id_ejemplar}' registrado."
 
     @log_operacion
+    def modificar_ejemplar(
+        self,
+        id_ejemplar: str,
+        titulo: str = None,
+        autor: str = None,
+        isbn: str = None,
+        anio_publicacion: int = None,
+        cantidad_paginas: int = None,
+        dias_prestamo: int = None,
+        sala: str = None,
+    ) -> str:
+        """Modificación de los datos de un ejemplar existente."""
+        ej = self._buscar_ejemplar_por_id(id_ejemplar)
+        if not ej:
+            raise ValueError(f"No se encontró el ejemplar '{id_ejemplar}'.")
+        if titulo:            ej.titulo = titulo
+        if autor:             ej.autor = autor
+        if isbn:              ej.isbn = isbn
+        if anio_publicacion:  ej.anio_publicacion = anio_publicacion
+        if cantidad_paginas:  ej.cantidad_paginas = cantidad_paginas
+        if dias_prestamo and isinstance(ej, EjemplarPrestable):
+            ej.dias_prestamo = dias_prestamo
+        if sala and isinstance(ej, EjemplarConsulta):
+            ej.sala = sala
+        return f"Ejemplar '{id_ejemplar}' modificado."
+
+    @log_operacion
     def dar_baja_ejemplar(self, id_ejemplar: str) -> str:
         """Baja de un ejemplar (solo si no está prestado)."""
         ej = self._buscar_ejemplar_por_id(id_ejemplar)
@@ -142,12 +153,12 @@ class Biblioteca(metaclass=ValidarMayuscula):
         return f"Ejemplar '{id_ejemplar}' dado de baja."
 
     def listar_ejemplares(self):
-        """Imprime el catálogo completo con detalles de cada ejemplar."""
+        """Imprime el catálogo completo."""
         if not self._ejemplares:
             print("  (catálogo vacío)")
             return
         for ej in self._ejemplares:
-            print(ej.mostrar_detalles())   # polimorfismo en acción
+            print(ej.mostrar_detalles())
             print()
 
     # ══════════════════════════════════════════
@@ -157,26 +168,43 @@ class Biblioteca(metaclass=ValidarMayuscula):
     @log_operacion
     def registrar_usuario(self, usuario: Usuario) -> str:
         """Alta de un usuario en el sistema."""
-        if self._buscar_usuario_por_legajo(usuario.legajo):
+        if self._buscar_usuario_por_dni(usuario.dni):
             raise ValueError(
-                f"Ya existe un usuario con legajo '{usuario.legajo}'."
+                f"Ya existe un usuario con DNI '{usuario.dni}'."
             )
         self._usuarios.append(usuario)
-        return f"Usuario '{usuario.nombre}' registrado."
+        return f"Usuario '{usuario.nombre_completo}' registrado."
 
     @log_operacion
-    def dar_baja_usuario(self, legajo: str) -> str:
-        """Baja de un usuario (solo si no tiene préstamos activos)."""
-        u = self._buscar_usuario_por_legajo(legajo)
+    def modificar_usuario(
+        self,
+        dni: str,
+        nombre: str = None,
+        apellido: str = None,
+        email: str = None,
+    ) -> str:
+        """Modificación de los datos de un usuario existente."""
+        u = self._buscar_usuario_por_dni(dni)
         if not u:
-            raise ValueError(f"No se encontró el usuario '{legajo}'.")
+            raise ValueError(f"No se encontró el usuario con DNI '{dni}'.")
+        if nombre:   u.nombre = nombre
+        if apellido: u.apellido = apellido
+        if email:    u.email = email
+        return f"Usuario '{u.nombre_completo}' modificado."
+
+    @log_operacion
+    def dar_baja_usuario(self, dni: str) -> str:
+        """Baja de un usuario (solo si no tiene préstamos activos)."""
+        u = self._buscar_usuario_por_dni(dni)
+        if not u:
+            raise ValueError(f"No se encontró el usuario con DNI '{dni}'.")
         if u.prestamos_activos:
             raise ValueError(
-                f"No se puede dar de baja '{legajo}': "
+                f"No se puede dar de baja '{dni}': "
                 f"tiene {len(u.prestamos_activos)} préstamo(s) activo(s)."
             )
         self._usuarios.remove(u)
-        return f"Usuario '{u.nombre}' dado de baja."
+        return f"Usuario '{u.nombre_completo}' dado de baja."
 
     def listar_usuarios(self):
         """Imprime todos los usuarios registrados."""
@@ -191,11 +219,8 @@ class Biblioteca(metaclass=ValidarMayuscula):
     # ══════════════════════════════════════════
 
     @log_operacion
-    def prestar_ejemplar(self, id_ejemplar: str, legajo: str) -> str:
-        """
-        Registra el préstamo de un EjemplarPrestable a un Usuario.
-        Biblioteca crea el objeto Prestamo → composición.
-        """
+    def prestar_ejemplar(self, id_ejemplar: str, dni: str) -> str:
+        """Registra el préstamo de un EjemplarPrestable a un Usuario."""
         ej = self._buscar_ejemplar_por_id(id_ejemplar)
         if not ej:
             raise ValueError(f"Ejemplar '{id_ejemplar}' no encontrado.")
@@ -203,21 +228,19 @@ class Biblioteca(metaclass=ValidarMayuscula):
             raise ValueError(
                 f"'{id_ejemplar}' es de consulta en sala. No se presta."
             )
-        u = self._buscar_usuario_por_legajo(legajo)
+        u = self._buscar_usuario_por_dni(dni)
         if not u:
-            raise ValueError(f"Usuario '{legajo}' no encontrado.")
+            raise ValueError(f"Usuario con DNI '{dni}' no encontrado.")
         if not ej.disponible:
             raise ValueError(
                 f"'{id_ejemplar}' no está disponible (estado: {ej.estado})."
             )
-
-        # Composición: Biblioteca crea el Prestamo
         prestamo = Prestamo(ej, u)
         ej.estado = "prestado"
         u.prestamos_activos.append(prestamo)
         self._prestamos.append(prestamo)
         return (
-            f"Préstamo registrado: '{ej.titulo}' → {u.nombre} "
+            f"Préstamo registrado: '{ej.titulo}' → {u.nombre_completo} "
             f"(devolver antes del {prestamo.fecha_limite})."
         )
 
@@ -234,7 +257,7 @@ class Biblioteca(metaclass=ValidarMayuscula):
         prestamo.usuario.prestamos_activos.remove(prestamo)
         return (
             f"Devolución registrada: '{prestamo.ejemplar.titulo}' "
-            f"— devuelto por {prestamo.usuario.nombre}."
+            f"— devuelto por {prestamo.usuario.nombre_completo}."
         )
 
     def listar_prestamos(self, solo_activos: bool = True):
@@ -247,7 +270,7 @@ class Biblioteca(metaclass=ValidarMayuscula):
             print(p)
 
     # ══════════════════════════════════════════
-    # BÚSQUEDAS INTERNAS (helpers privados)
+    # BÚSQUEDAS INTERNAS
     # ══════════════════════════════════════════
 
     def _buscar_ejemplar_por_id(self, id_ejemplar: str) -> Ejemplar | None:
@@ -256,14 +279,15 @@ class Biblioteca(metaclass=ValidarMayuscula):
             None,
         )
 
-    def _buscar_usuario_por_legajo(self, legajo: str) -> Usuario | None:
+    def _buscar_usuario_por_dni(self, dni: str) -> Usuario | None:
         return next(
-            (u for u in self._usuarios if u.legajo == legajo),
+            (u for u in self._usuarios if u.dni == dni),
             None,
         )
 
     def _buscar_prestamo_activo(self, id_ejemplar: str) -> Prestamo | None:
         return next(
-            (p for p in self._prestamos if p.activo and p.ejemplar.id_ejemplar == id_ejemplar),
+            (p for p in self._prestamos
+             if p.activo and p.ejemplar.id_ejemplar == id_ejemplar),
             None,
         )

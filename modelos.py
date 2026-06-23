@@ -23,34 +23,39 @@ from utils import ValidarMayuscula
 class Persona(metaclass=ValidarMayuscula):
     """Clase base que representa a cualquier persona del sistema."""
 
-    def __init__(self, nombre: str, dni: str):
+    def __init__(self, nombre: str, apellido: str, dni: str):
         self.nombre = nombre
+        self.apellido = apellido
         self.dni = dni
 
+    @property
+    def nombre_completo(self) -> str:
+        return f"{self.nombre} {self.apellido}"
+
     def __str__(self):
-        return f"{self.nombre} (DNI: {self.dni})"
+        return f"{self.nombre_completo} (DNI: {self.dni})"
 
 
 class Usuario(Persona):
     """
     Persona habilitada para interactuar con la biblioteca.
-    Hereda de Persona y agrega legajo y lista de préstamos activos.
+    Hereda de Persona y agrega email y lista de préstamos activos.
     """
 
-    def __init__(self, nombre: str, dni: str, legajo: str):
-        super().__init__(nombre, dni)
-        self.legajo = legajo
+    def __init__(self, nombre: str, apellido: str, dni: str, email: str):
+        super().__init__(nombre, apellido, dni)
+        self.email = email
         self.prestamos_activos: list = []   # lista de objetos Prestamo
 
     def __str__(self):
         return (
-            f"Usuario: {self.nombre} | DNI: {self.dni} | "
-            f"Legajo: {self.legajo} | "
+            f"{self.nombre_completo} | DNI: {self.dni} | "
+            f"Email: {self.email} | "
             f"Préstamos activos: {len(self.prestamos_activos)}"
         )
 
     def __repr__(self):
-        return f"Usuario(legajo={self.legajo!r}, nombre={self.nombre!r})"
+        return f"Usuario(dni={self.dni!r}, nombre={self.nombre_completo!r})"
 
 
 # ─────────────────────────────────────────────
@@ -65,11 +70,21 @@ class Ejemplar(metaclass=ValidarMayuscula):
     propio id_ejemplar (código de barra o ID único).
     """
 
-    def __init__(self, id_ejemplar: str, titulo: str, autor: str, isbn: str):
-        self.id_ejemplar = id_ejemplar   # código de barra único
+    def __init__(
+        self,
+        id_ejemplar: str,
+        titulo: str,
+        autor: str,
+        isbn: str,
+        anio_publicacion: int,
+        cantidad_paginas: int,
+    ):
+        self.id_ejemplar = id_ejemplar       # código de barra único
         self.titulo = titulo
         self.autor = autor
         self.isbn = isbn
+        self.anio_publicacion = anio_publicacion
+        self.cantidad_paginas = cantidad_paginas
 
     def mostrar_detalles(self) -> str:
         """
@@ -77,8 +92,9 @@ class Ejemplar(metaclass=ValidarMayuscula):
         En la clase base devuelve solo los datos comunes.
         """
         return (
-            f"[{self.id_ejemplar}] '{self.titulo}' — {self.autor} "
-            f"(ISBN: {self.isbn})"
+            f"[{self.id_ejemplar}] '{self.titulo}' — {self.autor} | "
+            f"ISBN: {self.isbn} | Año: {self.anio_publicacion} | "
+            f"Páginas: {self.cantidad_paginas}"
         )
 
     def __str__(self):
@@ -113,9 +129,12 @@ class EjemplarPrestable(Ejemplar):
         titulo: str,
         autor: str,
         isbn: str,
+        anio_publicacion: int,
+        cantidad_paginas: int,
         dias_prestamo: int = 7,
     ):
-        super().__init__(id_ejemplar, titulo, autor, isbn)
+        super().__init__(id_ejemplar, titulo, autor, isbn,
+                         anio_publicacion, cantidad_paginas)
         self._estado = "disponible"
         self.dias_prestamo = dias_prestamo
 
@@ -140,10 +159,9 @@ class EjemplarPrestable(Ejemplar):
     def mostrar_detalles(self) -> str:
         """Polimorfismo: muestra estado y plazo de préstamo."""
         base = super().mostrar_detalles()
-        estado_fmt = self._estado.upper()
         return (
             f"{base}\n"
-            f"   Tipo: PRESTABLE | Estado: {estado_fmt} | "
+            f"   Tipo: PRESTABLE | Estado: {self._estado.upper()} | "
             f"Plazo: {self.dias_prestamo} días"
         )
 
@@ -167,9 +185,12 @@ class EjemplarConsulta(Ejemplar):
         titulo: str,
         autor: str,
         isbn: str,
+        anio_publicacion: int,
+        cantidad_paginas: int,
         sala: str = "Sala general",
     ):
-        super().__init__(id_ejemplar, titulo, autor, isbn)
+        super().__init__(id_ejemplar, titulo, autor, isbn,
+                         anio_publicacion, cantidad_paginas)
         self.sala = sala
 
     def mostrar_detalles(self) -> str:
