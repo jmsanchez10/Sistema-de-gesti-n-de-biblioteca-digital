@@ -7,7 +7,7 @@ Ejecutar con:  python app.py
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from modelos import EjemplarPrestable, EjemplarConsulta, Usuario
 from biblioteca import Biblioteca
 from persistencia import guardar_datos, cargar_datos
@@ -482,10 +482,13 @@ class PantallaUsuarios(PantallaBase):
         nb.pack(fill="both", expand=True, padx=8, pady=8)
         tab_alta = tk.Frame(nb, bg=COLOR_BLANCO)
         tab_mod  = tk.Frame(nb, bg=COLOR_BLANCO)
+        tab_hist = tk.Frame(nb, bg=COLOR_BLANCO)
         nb.add(tab_alta, text="  Alta  ")
         nb.add(tab_mod,  text="  Modificar  ")
+        nb.add(tab_hist, text="  Historial  ")
         self._construir_tab_alta(tab_alta)
         self._construir_tab_mod(tab_mod)
+        self._construir_tab_historial(tab_hist)
 
     def _construir_tab_alta(self, tab):
         f = tk.Frame(tab, bg=COLOR_BLANCO)
@@ -515,6 +518,16 @@ class PantallaUsuarios(PantallaBase):
         boton(f, "Guardar cambios", self._modificar, color=COLOR_NARANJA
               ).grid(row=9, column=0, sticky="ew", pady=(14, 0))
 
+    def _construir_tab_historial(self, tab):
+        f = tk.Frame(tab, bg=COLOR_BLANCO)
+        f.pack(fill="both", expand=True, padx=8, pady=8)
+        tk.Label(f, text="Seleccioná un usuario en la tabla.",
+                 font=FUENTE_PEQUEÑA, bg=COLOR_BLANCO,
+                 fg=COLOR_TEXTO_SUAVE).pack(anchor="w", pady=(0, 6))
+        cols = [("titulo","Título",150),("inicio","Desde",80),
+                ("limite","Límite",80),("estado","Estado",70)]
+        self.tabla_hist = hacer_tabla(f, cols, alto=8)
+
     def _al_seleccionar(self, event):
         sel = self.tabla.selection()
         if not sel: return
@@ -524,6 +537,16 @@ class PantallaUsuarios(PantallaBase):
         self.m_nombre.insert(0, vals[0]); self.m_apellido.insert(0, vals[1])
         self.m_dni.insert(0, vals[2]);    self.m_email.insert(0, vals[3])
         self.m_dni.config(state="disabled")
+        # Cargar historial del usuario seleccionado
+        dni = str(vals[2])
+        self.tabla_hist.delete(*self.tabla_hist.get_children())
+        for p in self.bib._prestamos:
+            if p.usuario.dni == dni:
+                estado = "Activo" if p.activo else "Devuelto"
+                if p.vencido: estado = "⚠ Vencido"
+                self.tabla_hist.insert("", "end", values=(
+                    p.ejemplar.titulo, str(p.fecha_inicio),
+                    str(p.fecha_limite), estado))
 
     def _registrar(self):
         nombre = self.e_nombre.get().strip(); apellido = self.e_apellido.get().strip()
@@ -624,6 +647,15 @@ class PantallaPrestamos(PantallaBase):
                  font=FUENTE_PEQUEÑA, bg=COLOR_BLANCO, fg=COLOR_TEXTO_SUAVE,
                  justify="center").grid(row=11, column=0, pady=(12, 0))
 
+        ttk.Separator(f, orient="horizontal").grid(row=12, column=0, sticky="ew", pady=16)
+        tk.Label(f, text="Exportar reporte", font=FUENTE_SECCION,
+                 bg=COLOR_BLANCO, fg=COLOR_TEXTO).grid(row=13, column=0, sticky="w")
+        tk.Label(f, text="Descargá el historial\ncompleto en formato CSV.",
+                 font=FUENTE_PEQUEÑA, bg=COLOR_BLANCO,
+                 fg=COLOR_TEXTO_SUAVE, justify="left").grid(row=14, column=0, sticky="w", pady=(4,0))
+        boton(f, "Exportar CSV", self._exportar_csv,
+              color="#555570").grid(row=15, column=0, sticky="ew", pady=(10, 0))
+
     def _al_seleccionar(self, event):
         sel = self.tabla.selection()
         if sel:
@@ -653,6 +685,21 @@ class PantallaPrestamos(PantallaBase):
         except ValueError as e:
             messagebox.showerror("Error", str(e))
 
+    def _exportar_csv(self):
+        if not self.bib._prestamos:
+            messagebox.showwarning("Sin datos", "No hay préstamos para exportar."); return
+        ruta = filedialog.asksaveasfilename(
+            title="Guardar reporte CSV",
+            defaultextension=".csv",
+            filetypes=[("CSV", "*.csv"), ("Todos", "*.*")],
+            initialfile="reporte_prestamos.csv")
+        if not ruta: return
+        try:
+            exportar_csv(self.bib, ruta)
+            messagebox.showinfo("✔ Exportado", f"Reporte guardado en:\n{ruta}")
+        except Exception as e:
+            messagebox.showerror("Error al exportar", str(e))
+
     def refrescar(self):
         self.tabla.delete(*self.tabla.get_children())
         for p in self.bib._prestamos:
@@ -673,3 +720,26 @@ class PantallaPrestamos(PantallaBase):
 if __name__ == "__main__":
     app = App()
     app.mainloop()
+
+
+# ── EXPORTAR REPORTE ───────────────────────────────────────────────
+
+def exportar_csv(bib, ruta: str):
+    """Genera un CSV con el historial completo de préstamos."""
+    import csv
+    from pathlib import Path
+    with open(ruta, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["ID Ejemplar", "Título", "Autor", "ISBN",
+                         "Usuario", "DNI", "Fecha inicio",
+                         "Fecha límite", "Fecha devolución", "Estado"])
+        for p in bib._prestamos:
+            estado = "Activo" if p.activo else "Devuelto"
+            if p.vencido: estado = "Vencido"
+            writer.writerow([
+                p.ejemplar.id_ejemplar, p.ejemplar.titulo, p.ejemplar.autor,
+                p.ejemplar.isbn, p.usuario.nombre_completo, p.usuario.dni,
+                str(p.fecha_inicio), str(p.fecha_limite),
+                str(p.fecha_devol) if p.fecha_devol else "—", estado,
+            ])
+    return ruta
