@@ -13,6 +13,7 @@ El script recorre todos los requerimientos técnicos del TP:
   5. Agregación     Biblioteca ↔ Ejemplar / Usuario
   6. Composición    Biblioteca → Prestamo
   7. Singleton      una única instancia de Biblioteca
+  8. Validaciones   ISBN, año, email, DNI, páginas
 """
 
 from modelos import EjemplarPrestable, EjemplarConsulta, Usuario
@@ -30,17 +31,14 @@ def seccion(titulo: str):
     print(f"  {titulo}")
     print("═" * ancho)
 
-
 def subseccion(titulo: str):
     print(f"\n  ── {titulo}")
 
-
 def intentar(descripcion: str, func, *args, **kwargs):
-    """Ejecuta func(*args) y muestra el resultado o el error esperado."""
     print(f"\n  › {descripcion}")
     try:
         func(*args, **kwargs)
-    except ValueError as e:
+    except (ValueError, TypeError) as e:
         print(f"    ✔ Rechazado correctamente: {e}")
 
 
@@ -54,9 +52,8 @@ def main():
     # 1. METACLASE — ValidarMayuscula
     # ══════════════════════════════════════════════════════════
     seccion("1 · METACLASE — ValidarMayuscula")
-
-    print("\n  Todas las clases del sistema usan ValidarMayuscula.")
-    print("  Si el nombre no empieza con mayúscula → TypeError en definición.\n")
+    print("\n  Valida que los nombres de clase comiencen con mayúscula.")
+    print("  La validación ocurre en tiempo de definición, no de ejecución.\n")
 
     try:
         class claseInvalida(metaclass=ValidarMayuscula):
@@ -76,172 +73,186 @@ def main():
     bib_a = Biblioteca("Biblioteca Central UNAB")
     bib_b = Biblioteca("Intento de segunda instancia")
 
-    print(f"\n  bib_a is bib_b → {bib_a is bib_b}")
+    print(f"\n  bib_a is bib_b  →  {bib_a is bib_b}")
     print(f"  Nombre conservado: '{bib_a.nombre}'")
     print(f"  id(bib_a) == id(bib_b): {id(bib_a) == id(bib_b)}")
 
-    bib = bib_a   # referencia de trabajo para el resto del script
+    bib = bib_a
 
     # ══════════════════════════════════════════════════════════
-    # 3. HERENCIA + ALTA DE EJEMPLARES  (@log_operacion)
+    # 3. VALIDACIONES
     # ══════════════════════════════════════════════════════════
-    seccion("3 · HERENCIA y ALTA DE EJEMPLARES")
+    seccion("3 · VALIDACIONES de datos de entrada")
+
+    subseccion("ISBN inválido")
+    intentar("ISBN con formato incorrecto",
+             EjemplarPrestable, "X", "Título", "Autor", "123-INVALIDO", 2000, 100)
+
+    subseccion("Año de publicación inválido")
+    intentar("Año futuro (9999)",
+             EjemplarPrestable, "X", "Título", "Autor", "9780156013987", 9999, 100)
+
+    subseccion("Email inválido")
+    intentar("Email sin @",
+             Usuario, "Juan", "Pérez", "30000001", "correo-sin-arroba")
+
+    subseccion("DNI inválido")
+    intentar("DNI con letras",
+             Usuario, "Juan", "Pérez", "ABCDEFG", "juan@mail.com")
+
+    subseccion("Páginas inválidas")
+    intentar("Páginas = 0",
+             EjemplarPrestable, "X", "Título", "Autor", "9780156013987", 2000, 0)
+
+    # ══════════════════════════════════════════════════════════
+    # 4. HERENCIA + ALTA DE EJEMPLARES  (@log_operacion)
+    # ══════════════════════════════════════════════════════════
+    seccion("4 · HERENCIA y ALTA DE EJEMPLARES  (@log_operacion)")
 
     subseccion("Crear ejemplares físicos (mismo ISBN → distintos IDs)")
+    print()
 
-    # Tres ejemplares prestables del mismo título
     ep1 = EjemplarPrestable(
         "BC-0001", "El Principito", "Antoine de Saint-Exupéry",
-        "978-0156013987", dias_prestamo=7
-    )
+        "9780156013987", 1943, 96, dias_prestamo=7)
     ep2 = EjemplarPrestable(
         "BC-0002", "El Principito", "Antoine de Saint-Exupéry",
-        "978-0156013987", dias_prestamo=7
-    )
+        "9780156013987", 1943, 96, dias_prestamo=7)
     ep3 = EjemplarPrestable(
         "BC-0003", "Cien años de soledad", "Gabriel García Márquez",
-        "978-0060883287", dias_prestamo=14
-    )
-    # Ejemplar de solo consulta
+        "9780060883287", 1967, 432, dias_prestamo=14)
     ec1 = EjemplarConsulta(
         "BC-0099", "Enciclopedia Larousse", "Larousse Editorial",
-        "978-6072100012", sala="Sala de Referencia"
-    )
+        "9786072100012", 2020, 1200, sala="Sala de Referencia")
     ec2 = EjemplarConsulta(
         "BC-0100", "Diccionario de la RAE", "Real Academia Española",
-        "978-8467041507", sala="Sala de Referencia"
-    )
+        "9788467041507", 2014, 2200, sala="Sala de Referencia")
 
-    print()
     bib.registrar_ejemplar(ep1)
     bib.registrar_ejemplar(ep2)
     bib.registrar_ejemplar(ep3)
     bib.registrar_ejemplar(ec1)
     bib.registrar_ejemplar(ec2)
 
-    subseccion("Intento de ID duplicado")
-    intentar(
-        "Registrar BC-0001 por segunda vez",
-        bib.registrar_ejemplar,
-        EjemplarPrestable("BC-0001", "Duplicado", "X", "000")
-    )
+    subseccion("ID duplicado rechazado")
+    intentar("Registrar BC-0001 por segunda vez",
+             bib.registrar_ejemplar,
+             EjemplarPrestable("BC-0001", "Duplicado", "X", "9780156013987", 2000, 100))
 
     # ══════════════════════════════════════════════════════════
-    # 4. POLIMORFISMO — mostrar_detalles()
+    # 5. POLIMORFISMO — mostrar_detalles()
     # ══════════════════════════════════════════════════════════
-    seccion("4 · POLIMORFISMO — mostrar_detalles()")
+    seccion("5 · POLIMORFISMO — mostrar_detalles()")
 
     print("\n  Misma llamada, distintos resultados según el tipo de ejemplar:\n")
-    catalogo_mixto = [ep1, ep2, ep3, ec1, ec2]
-    for ej in catalogo_mixto:
+    for ej in [ep1, ep3, ec1]:
         print(f"  [{ej.__class__.__name__}]")
         for linea in ej.mostrar_detalles().splitlines():
             print(f"    {linea}")
         print()
 
     # ══════════════════════════════════════════════════════════
-    # 5. ALTA DE USUARIOS (Agregación: Biblioteca ↔ Usuario)
+    # 6. ALTA DE USUARIOS  (Agregación)
     # ══════════════════════════════════════════════════════════
-    seccion("5 · ALTA DE USUARIOS  (Agregación)")
+    seccion("6 · ALTA DE USUARIOS  (Agregación)")
 
-    u1 = Usuario("Ana García",    "30111222", "LIC-001")
-    u2 = Usuario("Carlos Ruiz",   "28999000", "LIC-002")
-    u3 = Usuario("Lucía Fernández","35444555", "LIC-003")
+    u1 = Usuario("Ana",   "García", "30111222", "ana@mail.com")
+    u2 = Usuario("Carlos","Ruiz",   "28999000", "carlos@mail.com")
+    u3 = Usuario("Lucía", "Fernández", "35444555", "lucia@mail.com")
+
     print()
-    
     bib.registrar_usuario(u1)
     bib.registrar_usuario(u2)
     bib.registrar_usuario(u3)
 
-    subseccion("Intento de legajo duplicado")
-    intentar(
-        "Registrar LIC-001 por segunda vez",
-        bib.registrar_usuario,
-        Usuario("Ana Bis", "99999999", "LIC-001")
-    )
+    subseccion("DNI duplicado rechazado")
+    intentar("Registrar DNI 30111222 por segunda vez",
+             bib.registrar_usuario,
+             Usuario("Ana Bis", "Bis", "30111222", "anabis@mail.com"))
 
     subseccion("Usuarios registrados")
     print()
     bib.listar_usuarios()
 
     # ══════════════════════════════════════════════════════════
-    # 6. PRÉSTAMOS  (Composición: Biblioteca crea Prestamo)
+    # 7. PRÉSTAMOS  (Composición)
     # ══════════════════════════════════════════════════════════
-    seccion("6 · PRÉSTAMOS  (Composición)")
+    seccion("7 · PRÉSTAMOS  (Composición)")
 
     subseccion("Préstamos exitosos")
     print()
-    bib.prestar_ejemplar("BC-0001", "LIC-001")   # El Principito → Ana
-    bib.prestar_ejemplar("BC-0002", "LIC-002")   # otro ejemplar mismo título → Carlos
-    bib.prestar_ejemplar("BC-0003", "LIC-003")   # Cien años → Lucía
+    bib.prestar_ejemplar("BC-0001", "30111222")
+    bib.prestar_ejemplar("BC-0002", "28999000")
+    bib.prestar_ejemplar("BC-0003", "35444555")
 
     subseccion("Préstamos activos")
     print()
     bib.listar_prestamos(solo_activos=True)
 
     subseccion("Casos inválidos")
-    intentar(
-        "Prestar un ejemplar de consulta (BC-0099)",
-        bib.prestar_ejemplar, "BC-0099", "LIC-001"
-    )
-    intentar(
-        "Prestar BC-0001 (ya prestado)",
-        bib.prestar_ejemplar, "BC-0001", "LIC-003"
-    )
-    intentar(
-        "Prestar BC-0001 a usuario inexistente (LIC-999)",
-        bib.prestar_ejemplar, "BC-0001", "LIC-999"
-    )
+    intentar("Prestar ejemplar de consulta (BC-0099)",
+             bib.prestar_ejemplar, "BC-0099", "30111222")
+    intentar("Prestar BC-0001 (ya prestado)",
+             bib.prestar_ejemplar, "BC-0001", "35444555")
+    intentar("Prestar a usuario inexistente (DNI 00000000)",
+             bib.prestar_ejemplar, "BC-0001", "00000000")
 
     # ══════════════════════════════════════════════════════════
-    # 7. DEVOLUCIONES
+    # 8. DEVOLUCIONES
     # ══════════════════════════════════════════════════════════
-    seccion("7 · DEVOLUCIONES")
+    seccion("8 · DEVOLUCIONES")
 
     print()
     bib.devolver_ejemplar("BC-0001")
     bib.devolver_ejemplar("BC-0003")
 
-    subseccion("Estado del ejemplar tras devolución")
-    print(f"\n  BC-0001 estado: {ep1.estado}")
+    subseccion("Estado tras devolución")
+    print(f"\n  BC-0001 estado : {ep1.estado}")
     print(f"  Préstamos activos de Ana: {len(u1.prestamos_activos)}")
 
     subseccion("Historial completo de préstamos")
     print()
     bib.listar_prestamos(solo_activos=False)
 
-    intentar(
-        "Devolver BC-0001 nuevamente (ya devuelto)",
-        bib.devolver_ejemplar, "BC-0001"
-    )
+    intentar("Devolver BC-0001 nuevamente (ya devuelto)",
+             bib.devolver_ejemplar, "BC-0001")
 
     # ══════════════════════════════════════════════════════════
-    # 8. BAJAS
+    # 9. MODIFICACIONES
     # ══════════════════════════════════════════════════════════
-    seccion("8 · BAJAS")
+    seccion("9 · MODIFICACIONES")
+
+    print()
+    bib.modificar_ejemplar("BC-0002", titulo="El Principito (Ed. Especial)", dias_prestamo=10)
+    bib.modificar_usuario("28999000", email="carlos.nuevo@mail.com")
+
+    subseccion("Verificar cambios")
+    print(f"\n  Nuevo título BC-0002 : {ep2.titulo}")
+    print(f"  Nuevo email Carlos  : {u2.email}")
+
+    # ══════════════════════════════════════════════════════════
+    # 10. BAJAS
+    # ══════════════════════════════════════════════════════════
+    seccion("10 · BAJAS")
 
     subseccion("Baja de usuario con préstamo activo")
-    intentar(
-        "Dar de baja LIC-002 (tiene BC-0002 prestado)",
-        bib.dar_baja_usuario, "LIC-002"
-    )
+    intentar("Dar de baja Carlos (tiene BC-0002 prestado)",
+             bib.dar_baja_usuario, "28999000")
 
     subseccion("Baja de ejemplar prestado")
-    intentar(
-        "Dar de baja BC-0002 (está prestado)",
-        bib.dar_baja_ejemplar, "BC-0002"
-    )
+    intentar("Dar de baja BC-0002 (está prestado)",
+             bib.dar_baja_ejemplar, "BC-0002")
 
-    subseccion("Bajas válidas (tras devolución)")
+    subseccion("Bajas válidas tras devolución")
     bib.devolver_ejemplar("BC-0002")
     print()
     bib.dar_baja_ejemplar("BC-0002")
-    bib.dar_baja_usuario("LIC-002")
+    bib.dar_baja_usuario("28999000")
 
     # ══════════════════════════════════════════════════════════
-    # 9. ESTADO FINAL DEL SISTEMA
+    # 11. ESTADO FINAL
     # ══════════════════════════════════════════════════════════
-    seccion("9 · ESTADO FINAL DEL SISTEMA")
+    seccion("11 · ESTADO FINAL DEL SISTEMA")
 
     print()
     print(bib)
@@ -255,7 +266,7 @@ def main():
     bib.listar_usuarios()
 
     print("\n" + "═" * 60)
-    print("  Demostración completada.")
+    print("  Demostración completada exitosamente.")
     print("═" * 60 + "\n")
 
 
