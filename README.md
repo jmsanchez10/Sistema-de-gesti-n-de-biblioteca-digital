@@ -10,7 +10,7 @@ Licenciatura en Ciencia de Datos · Universidad Nacional Guillermo Brown (UNAB)
 | Nombre | GitHub |
 |--------|--------|
 | Julián Sánchez | [@jmsanchez10](https://github.com/jmsanchez10) |
-| Franco Gómez | — |
+| Franco Gómez | [@zet0wcs](https://github.com/zet0wcs) |
 
 ---
 
