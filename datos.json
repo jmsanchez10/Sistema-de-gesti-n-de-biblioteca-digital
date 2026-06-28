@@ -23,6 +23,116 @@
       "dias_prestamo": 14
     },
     {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0003",
+      "titulo": "Ficciones",
+      "autor": "Jorge Luis Borges",
+      "isbn": "9788420633138",
+      "anio_publicacion": 1944,
+      "cantidad_paginas": 224,
+      "estado": "disponible",
+      "dias_prestamo": 7
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0004",
+      "titulo": "1984",
+      "autor": "George Orwell",
+      "isbn": "9788499890944",
+      "anio_publicacion": 1949,
+      "cantidad_paginas": 336,
+      "estado": "disponible",
+      "dias_prestamo": 7
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0005",
+      "titulo": "El Señor de los Anillos",
+      "autor": "J.R.R. Tolkien",
+      "isbn": "9788445000663",
+      "anio_publicacion": 1954,
+      "cantidad_paginas": 1216,
+      "estado": "disponible",
+      "dias_prestamo": 21
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0006",
+      "titulo": "Don Quijote de la Mancha",
+      "autor": "Miguel de Cervantes",
+      "isbn": "9788467021998",
+      "anio_publicacion": 1605,
+      "cantidad_paginas": 1376,
+      "estado": "disponible",
+      "dias_prestamo": 21
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0007",
+      "titulo": "Juego de Tronos",
+      "autor": "George R.R. Martin",
+      "isbn": "9788496208469",
+      "anio_publicacion": 1996,
+      "cantidad_paginas": 694,
+      "estado": "disponible",
+      "dias_prestamo": 14
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0008",
+      "titulo": "El Gran Gatsby",
+      "autor": "F. Scott Fitzgerald",
+      "isbn": "9788498383683",
+      "anio_publicacion": 1925,
+      "cantidad_paginas": 208,
+      "estado": "disponible",
+      "dias_prestamo": 7
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0009",
+      "titulo": "Crónica de una Muerte Anunciada",
+      "autor": "Gabriel García Márquez",
+      "isbn": "9780307387738",
+      "anio_publicacion": 1981,
+      "cantidad_paginas": 128,
+      "estado": "disponible",
+      "dias_prestamo": 7
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0010",
+      "titulo": "Python para Análisis de Datos",
+      "autor": "Wes McKinney",
+      "isbn": "9781491957660",
+      "anio_publicacion": 2017,
+      "cantidad_paginas": 544,
+      "estado": "disponible",
+      "dias_prestamo": 14
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0011",
+      "titulo": "Introducción a la Estadística",
+      "autor": "Ronald E. Walpole",
+      "isbn": "9786073214179",
+      "anio_publicacion": 2012,
+      "cantidad_paginas": 816,
+      "estado": "disponible",
+      "dias_prestamo": 14
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0012",
+      "titulo": "Data Science desde Cero",
+      "autor": "Joel Grus",
+      "isbn": "9781492041139",
+      "anio_publicacion": 2019,
+      "cantidad_paginas": 406,
+      "estado": "disponible",
+      "dias_prestamo": 14
+    },
+    {
       "tipo": "consulta",
       "id_ejemplar": "BC-0099",
       "titulo": "Enciclopedia Larousse",
@@ -31,6 +141,17 @@
       "anio_publicacion": 2020,
       "cantidad_paginas": 1200,
       "sala": "Sala A"
+    },
+    {
+      "tipo": "prestable",
+      "id_ejemplar": "BC-0098",
+      "titulo": "Harry Potter y la Piedra Filosofal",
+      "autor": "J.K. Rowling",
+      "isbn": "9788478884452",
+      "anio_publicacion": 1997,
+      "cantidad_paginas": 256,
+      "estado": "disponible",
+      "dias_prestamo": 10
     }
   ],
   "usuarios": [
