@@ -12,17 +12,20 @@ from modelos import EjemplarPrestable, EjemplarConsulta, Usuario
 from biblioteca import Biblioteca
 from persistencia import guardar_datos, cargar_datos
 
-COLOR_FONDO       = "#F7F7F8"
-COLOR_SIDEBAR     = "#1E1E2E"
-COLOR_SIDEBAR_SEL = "#313147"
-COLOR_ACENTO      = "#7C6AF7"
-COLOR_ACENTO2     = "#5EC4A8"
-COLOR_PELIGRO     = "#E05C5C"
-COLOR_NARANJA     = "#F0A500"
-COLOR_TEXTO       = "#1A1A2E"
-COLOR_TEXTO_SUAVE = "#6B6B80"
-COLOR_BLANCO      = "#FFFFFF"
-COLOR_BORDE       = "#E2E2E8"
+COLOR_AZUL_UNAB    = "#1B3A6B"
+COLOR_CELESTE_UNAB = "#29ABE2"
+COLOR_CELESTE_CLARO= "#E8F6FD"
+COLOR_FONDO        = "#A4BFDF"
+COLOR_SIDEBAR      = "#1B3A6B"
+COLOR_SIDEBAR_SEL  = "#142D55"
+COLOR_ACENTO       = "#142D55"
+COLOR_ACENTO2      = "#1EC041"
+COLOR_PELIGRO      = "#D64045"
+COLOR_NARANJA      = "#F0A500"
+COLOR_TEXTO        = "#1A2A3A"
+COLOR_TEXTO_SUAVE  = "#6B7A8D"
+COLOR_BLANCO       = "#FFFFFF"
+COLOR_BORDE        = "#D0DCE8"
 
 FUENTE_TITULO  = ("Segoe UI", 20, "bold")
 FUENTE_SECCION = ("Segoe UI", 13, "bold")
@@ -82,11 +85,18 @@ class App(tk.Tk):
         self._mostrar("dashboard")
 
     def _construir_sidebar(self):
-        tk.Label(self.sidebar, text="📚", font=("Segoe UI", 28),
-                 bg=COLOR_SIDEBAR, fg=COLOR_ACENTO).pack(pady=(28, 4))
-        tk.Label(self.sidebar, text="Biblioteca\nUNAB",
-                 font=("Segoe UI", 12, "bold"), bg=COLOR_SIDEBAR,
-                 fg=COLOR_BLANCO, justify="center").pack(pady=(0, 28))
+        self._logo_img = None
+        try:
+            from PIL import Image, ImageTk
+            img = Image.open("logo_unab.png").convert("RGBA")
+            img.thumbnail((180, 60), Image.LANCZOS)
+            self._logo_img = ImageTk.PhotoImage(img)
+            tk.Label(self.sidebar, image=self._logo_img,
+                     bg=COLOR_SIDEBAR).pack(pady=(20, 4))
+        except Exception:
+            tk.Label(self.sidebar, text="🎓 UNAB",
+                     font=("Segoe UI", 16, "bold"),
+                     bg=COLOR_SIDEBAR, fg=COLOR_BLANCO).pack(pady=(20, 4))
         ttk.Separator(self.sidebar).pack(fill="x", padx=16, pady=4)
         self.botones_nav = {}
         for clave, etiqueta in [
