@@ -5,7 +5,7 @@ Licenciatura en Ciencia de Datos · Universidad Nacional Guillermo Brown (UNAB)
 
 ---
 
-## Integrantes
+## Integrantes - Grupo 19
 
 | Nombre | GitHub |
 |--------|--------|
@@ -16,7 +16,7 @@ Licenciatura en Ciencia de Datos · Universidad Nacional Guillermo Brown (UNAB)
 
 ## Descripción
 
-Sistema de gestión de una biblioteca física desarrollado en Python con Programación Orientada a Objetos. Permite administrar ejemplares físicos (libros), usuarios y préstamos a través de una interfaz gráfica de escritorio construida con `tkinter`.
+Sistema de gestión de una biblioteca desarrollado en Python con Programación Orientada a Objetos. Permite administrar ejemplares físicos (libros), usuarios y préstamos a través de una interfaz gráfica de escritorio construida con `tkinter`.
 
 El sistema implementa todos los requerimientos técnicos de la materia:
 
